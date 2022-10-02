@@ -1,0 +1,16 @@
+{
+  "tasks": [
+    {
+      "label": "aws-vault",
+      "type": "process",
+      "command": "aws-vault",
+      "problemMatcher": [],
+      "isBackground": true,
+      "args": [
+        "exec",
+        "gjhr-me",
+        "-s"
+      ]
+    }
+  ]
+}

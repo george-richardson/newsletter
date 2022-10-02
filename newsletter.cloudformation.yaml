@@ -1,0 +1,44 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Resources: 
+  SubscriptionsTable: 
+    Type: AWS::DynamoDB::Table
+    Properties: 
+      TableName: "subscriptions"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions: 
+        - AttributeName: "email"
+          AttributeType: "S"
+        - AttributeName: "list"
+          AttributeType: "S"
+        - AttributeName: "verified"
+          AttributeType: "S"
+        - AttributeName: "verification_token"
+          AttributeType: "S"
+      KeySchema: 
+        - AttributeName: "email"
+          KeyType: "HASH"
+        - AttributeName: "list"
+          KeyType: "RANGE"
+      GlobalSecondaryIndexes:
+        - IndexName: list-verified
+          KeySchema:
+          - AttributeName: "list"
+            KeyType: "HASH"
+          - AttributeName: "verified"
+            KeyType: "RANGE"
+          Projection:
+            ProjectionType: KEYS_ONLY
+        - IndexName: verification-token
+          KeySchema: 
+            - AttributeName: "verification_token"
+              KeyType: "HASH"
+          Projection:
+            ProjectionType: KEYS_ONLY
+ListsTable: 
+    Type: AWS::DynamoDB::Table
+    Properties: 
+      TableName: "lists"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions: 
+        - AttributeName: "name"
+          AttributeType: "S"
