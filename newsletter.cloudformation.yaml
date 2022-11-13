@@ -1,5 +1,15 @@
 AWSTemplateFormatVersion: "2010-09-09"
+
+Parameters:
+  ArtifactPath:
+    Type: String
+    Description: Path of lambda artifact in ArtifactBucket.
+  ArtifactBucket:
+    Type: String
+    Description: Name of the S3 bucket which contains lambda artifacts.
+
 Resources: 
+  # DYNAMO
   SubscriptionsTable: 
     Type: AWS::DynamoDB::Table
     Properties: 
@@ -34,7 +44,7 @@ Resources:
               KeyType: "HASH"
           Projection:
             ProjectionType: KEYS_ONLY
-ListsTable: 
+  ListsTable: 
     Type: AWS::DynamoDB::Table
     Properties: 
       TableName: "lists"
@@ -42,3 +52,83 @@ ListsTable:
       AttributeDefinitions: 
         - AttributeName: "name"
           AttributeType: "S"
+      KeySchema: 
+        - AttributeName: "name"
+          KeyType: "HASH"
+
+  # Lambda Role
+  NewsletterLambdaRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - "dynamodb:BatchGetItem"
+                  - "dynamodb:BatchWriteItem"
+                  - "dynamodb:PutItem"
+                  - "dynamodb:DescribeTable"
+                  - "dynamodb:DeleteItem"
+                  - "dynamodb:GetItem"
+                  - "dynamodb:Scan"
+                  - "dynamodb:Query"
+                  - "dynamodb:UpdateItem"
+                Resource:
+                  - !GetAtt [SubscriptionsTable, Arn]
+                  - !GetAtt [ListsTable, Arn]
+              - Effect: Allow
+                Action: 
+                  - "ses:SendEmail"
+                  - "ses:SendBulkEmail"
+                Resource: '*'
+
+  # Lambda
+  NewsletterLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: go1.x
+      Role: !GetAtt [NewsletterLambdaRole, Arn]
+      Handler: newsletter
+      Code: 
+        S3Bucket: !Ref ArtifactBucket
+        S3Key: !Ref ArtifactPath
+      Description: Newsletter service handler.
+
+  # API Gateway
+  NewsletterAPI:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Description: Backend API for newsletter management
+      Name: NewsletterAPI
+  LambdaProxyResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId: !Ref NewsletterAPI
+      ParentId: !GetAtt [NewsletterAPI, RootResourceId]
+      PathPart: '{proxy+}'
+  LambdaProxyResourceANY:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      RestApiId: !Ref NewsletterAPI
+      ResourceId: !Ref LambdaProxyResource
+      HttpMethod: ANY
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub >-
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${NewsletterLambda.Arn}/invocations
+

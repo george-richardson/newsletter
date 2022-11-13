@@ -1,0 +1,11 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Resources: 
+  NewsletterArtifactsBucket:
+    Type: 'AWS::S3::Bucket'
+
+Outputs:
+  ArtifactsBucketName:
+    Description: Name of the bucket to be used for newletter lambda artifacts
+    Value: !Ref NewsletterArtifactsBucket
+    Export:
+      Name: NewsletterArtifactsBucketName
