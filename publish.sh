@@ -42,7 +42,8 @@ aws cloudformation update-stack --stack-name "$STACK_NAME" \
   --capabilities 'CAPABILITY_IAM' \
   --parameters \
     "ParameterKey=ArtifactPath,ParameterValue=$S3_FILE" \
-    "ParameterKey=ArtifactBucket,ParameterValue=$S3_BUCKET"
+    "ParameterKey=ArtifactBucket,ParameterValue=$S3_BUCKET" || 
+  __error-red "Failed to update cloudformation"
 echo "Waiting for stack update to complete..."
 aws cloudformation wait stack-update-complete --stack-name "$STACK_NAME"
 __echo-green "Stack updated!"
