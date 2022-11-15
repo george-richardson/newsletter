@@ -19,7 +19,7 @@ rm out/*
 __echo-green "Deleted!"
 
 __echo-blue "Building new artifacts..."
-go build -o out/ || __error-red "Failed to build package."
+CGO_ENABLED=0 go build -o out/ || __error-red "Failed to build package."
 __echo-green "Built!"
 
 __echo-blue "Getting SHA1 of new artifact..."
@@ -27,7 +27,7 @@ ARTIFACT_SHASUM=$(sha1sum "$ARTIFACT_PATH" | cut -d ' ' -f 1)
 __echo-green "Got SHA1 '$ARTIFACT_SHASUM'"
 
 __echo-blue "Zipping new artifact to '$ZIP_PATH'..."
-zip "$ZIP_PATH" "$ARTIFACT_PATH"
+zip -j "$ZIP_PATH" "$ARTIFACT_PATH"
 __echo-green "Zipped!"
 
 S3_FILE="$ARTIFACT_SHASUM.zip"

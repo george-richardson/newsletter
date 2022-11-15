@@ -70,6 +70,8 @@ Resources:
             Action:
               - 'sts:AssumeRole'
       Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
         - PolicyName: root
           PolicyDocument:
@@ -106,6 +108,14 @@ Resources:
         S3Bucket: !Ref ArtifactBucket
         S3Key: !Ref ArtifactPath
       Description: Newsletter service handler.
+  NewsletterLambdaAPIGatewayPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt NewsletterLambda.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceAccount: !Ref 'AWS::AccountId'
+      SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${NewsletterAPI}/*/*/*"
 
   # API Gateway
   NewsletterAPI:
@@ -117,7 +127,7 @@ Resources:
     Type: 'AWS::ApiGateway::Resource'
     Properties:
       RestApiId: !Ref NewsletterAPI
-      ParentId: !GetAtt [NewsletterAPI, RootResourceId]
+      ParentId: !GetAtt NewsletterAPI.RootResourceId
       PathPart: '{proxy+}'
   LambdaProxyResourceANY:
     Type: 'AWS::ApiGateway::Method'
@@ -131,4 +141,11 @@ Resources:
         IntegrationHttpMethod: POST
         Uri: !Sub >-
           arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${NewsletterLambda.Arn}/invocations
+  NewsletterAPIDeployment:
+    DependsOn: LambdaProxyResourceANY
+    Type: 'AWS::ApiGateway::Deployment'
+    Properties:
+      RestApiId: !Ref NewsletterAPI
+      Description: prod
+      StageName: prod
 
