@@ -90,7 +90,9 @@ Resources:
                   - "dynamodb:UpdateItem"
                 Resource:
                   - !GetAtt [SubscriptionsTable, Arn]
+                  - !Sub "${SubscriptionsTable.Arn}/*"
                   - !GetAtt [ListsTable, Arn]
+                  - !Sub "${ListsTable.Arn}/*"
               - Effect: Allow
                 Action: 
                   - "ses:SendEmail"
@@ -141,6 +143,18 @@ Resources:
         IntegrationHttpMethod: POST
         Uri: !Sub >-
           arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${NewsletterLambda.Arn}/invocations
+  LambdaProxyResourceANYRoot:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      RestApiId: !Ref NewsletterAPI
+      ResourceId: !GetAtt NewsletterAPI.RootResourceId
+      HttpMethod: ANY
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub >-
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${NewsletterLambda.Arn}/invocations
   NewsletterAPIDeployment:
     DependsOn: LambdaProxyResourceANY
     Type: 'AWS::ApiGateway::Deployment'
@@ -149,3 +163,9 @@ Resources:
       Description: prod
       StageName: prod
 
+Outputs:
+  NewsletterAPIID:
+    Description: ID of the deployed API Gateway
+    Value: !Ref NewsletterAPI
+    Export:
+      Name: NewsletterAPIID

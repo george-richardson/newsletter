@@ -127,15 +127,18 @@ func Verify(token string) error {
 	log.Infof("Verifiying token '%v'...", token)
 	// Set email as verified
 	response, err := querySubscriptions(&dynamodb.QueryInput{
-		TableName: &subscriptionsTableName,
-		IndexName: aws.String("verification-token"),
+		TableName:              &subscriptionsTableName,
+		IndexName:              aws.String("verification-token"),
+		KeyConditionExpression: aws.String("verification_token = :token"),
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":token": {S: &token},
+		},
 	})
-
-	subscriptions := *response
-
 	if err != nil {
 		return err
 	}
+
+	subscriptions := *response
 	if len(subscriptions) == 0 {
 		return ERR_UNKNOWN_TOKEN
 	}

@@ -47,3 +47,8 @@ aws cloudformation update-stack --stack-name "$STACK_NAME" \
 echo "Waiting for stack update to complete..."
 aws cloudformation wait stack-update-complete --stack-name "$STACK_NAME"
 __echo-green "Stack updated!"
+
+__echo-blue "Deploying to prod stage..."
+API_ID=$(aws cloudformation list-exports --query 'Exports[?Name==`NewsletterAPIID`].Value' --output text)
+aws apigateway create-deployment --stage-name prod --rest-api-id "$API_ID" 
+__echo-green "Stage deployed!"
