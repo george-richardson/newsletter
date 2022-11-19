@@ -17,8 +17,16 @@ type List struct {
 	ReplyToAddress string `dynamodbav:"reply_to_address"`
 }
 
-func (l List) FormatUnsubscribeLink(subscription Subscription) string {
-	return fmt.Sprintf("https://%v/unsubscribe?email=%v", l.Domain, subscription.Email)
+func (l List) FormatBaseURL() string {
+	return fmt.Sprintf("https://%v", l.Domain)
+}
+
+func (l List) FormatUnsubscribeLink(s Subscription) string {
+	return fmt.Sprintf("%v/unsubscribe?email=%v", l.FormatBaseURL(), s.Email)
+}
+
+func (l List) FormatVerificationLink(s Subscription) string {
+	return fmt.Sprintf("%v/verify?token=%v", l.FormatBaseURL(), s.VerificationToken)
 }
 
 func GetListByDomain(domain string) (*List, error) {

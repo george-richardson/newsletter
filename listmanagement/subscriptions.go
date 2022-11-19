@@ -2,6 +2,7 @@ package listmanagement
 
 import (
 	"fmt"
+	"html/template"
 	"net/mail"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/google/uuid"
+	"gjhr.me/newsletter/emailsender"
 )
 
 type Subscription struct {
@@ -20,12 +22,8 @@ type Subscription struct {
 	LastSentVerification time.Time `dynamodbav:"last_sent_verification,unixtime"`
 }
 
-func (s Subscription) FormatVerificationLink() string {
-	return fmt.Sprintf("FORMATTED_VERIFICATION_LINK?token=%v", s.VerificationToken)
-}
-
-func Subscribe(list, email string) (*Subscription, error) {
-	log.Infof("Subscribing '%v' to list '%v'...", email, list)
+func Subscribe(list *List, email string) (*Subscription, error) {
+	log.Infof("Subscribing '%v' to list '%v'...", email, list.Name)
 	// Validate email
 	validAddress, err := mail.ParseAddress(email)
 	if err != nil {
@@ -35,13 +33,13 @@ func Subscribe(list, email string) (*Subscription, error) {
 
 	// TODO check if list exists
 
-	subscription, err := getSubscription(list, email)
+	subscription, err := getSubscription(list.Name, email)
 	if err != nil {
 		return nil, err
 	}
 
 	if subscription != nil {
-		return subscription, resendVerificationEmail(*subscription)
+		return subscription, resendVerificationEmail(*subscription, list)
 	}
 
 	// Generate verification token
@@ -53,7 +51,7 @@ func Subscribe(list, email string) (*Subscription, error) {
 	// Save row to Dynamodb table
 	subscription = &Subscription{
 		Email:                email,
-		List:                 list,
+		List:                 list.Name,
 		VerificationToken:    uuid.String(),
 		LastSentVerification: time.Now(),
 	}
@@ -71,15 +69,15 @@ func Subscribe(list, email string) (*Subscription, error) {
 	}
 
 	// Send verification email
-	return subscription, sendVerificationEmail(*subscription)
+	return subscription, sendVerificationEmail(*subscription, list)
 }
 
-func resendVerificationEmail(subscription Subscription) error {
-	log.Infof("Resending verification email to '%v' for list '%v'...", subscription.Email, subscription.List)
-	if subscription.LastSentVerification.After(time.Now().Add(time.Minute * -15)) {
+func resendVerificationEmail(s Subscription, l *List) error {
+	log.Infof("Resending verification email to '%v' for list '%v'...", s.Email, s.List)
+	if s.LastSentVerification.After(time.Now().Add(time.Minute * -15)) {
 		return ERR_RECENTLY_SENT_VERIFICATION
 	}
-	err := sendVerificationEmail(subscription)
+	err := sendVerificationEmail(s, l)
 	if err != nil {
 		return err
 	}
@@ -94,10 +92,10 @@ func resendVerificationEmail(subscription Subscription) error {
 		TableName: &subscriptionsTableName,
 		Key: map[string]*dynamodb.AttributeValue{
 			"email": {
-				S: &subscription.Email,
+				S: &s.Email,
 			},
 			"list": {
-				S: &subscription.List,
+				S: &s.List,
 			},
 		},
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
@@ -113,13 +111,44 @@ func resendVerificationEmail(subscription Subscription) error {
 	return nil
 }
 
-func sendVerificationEmail(subscription Subscription) error {
-	log.Infof("Sending verification email to '%v' for list '%v'...", subscription.Email, subscription.List)
-	if subscription.Verified != "" {
+func sendVerificationEmail(s Subscription, l *List) error {
+	log.Infof("Sending verification email to '%v' for list '%v'...", s.Email, s.List)
+	if s.Verified != "" {
 		return ERR_ALREADY_VERIFIED
 	}
 
-	// TODO actually send the email
+	t, err := template.New("verification-email").Parse(`
+	<!DOCTYPE html>
+	<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office">
+	<head>
+			<meta charset="UTF-8">
+			<meta name="viewport" content="width=device-width,initial-scale=1">
+			<meta name="x-apple-disable-message-reformatting">
+			<title></title>
+			<style>
+					body {font-family: Arial, sans-serif;}
+			</style>
+	</head>
+	<body>
+		<h3>Please verify your email</h3>
+		<p>
+			To complete your subscription to {{ .List }}, please click <a href="{{ .VerificationLink }}">this link</a> or browse to the URL below.
+		</p>
+		<p>
+			{{ .VerificationLink }}
+		</p>
+	</body>
+	</html>
+	`)
+	if err != nil {
+		return err
+	}
+
+	err = emailsender.SendMail(s.Email, l.FromAddress, l.ReplyToAddress, fmt.Sprintf("Verify email for %v", l.Name), t, struct{ List, VerificationLink string }{List: l.Name, VerificationLink: l.FormatVerificationLink(s)})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

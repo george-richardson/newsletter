@@ -137,7 +137,7 @@ func subscribe(ctx context.Context, req events.APIGatewayProxyRequest) (events.A
 	if err != nil {
 		return returnErr(err)
 	}
-	subscription, err := listmanagement.Subscribe(list.Name, req.QueryStringParameters["email"])
+	subscription, err := listmanagement.Subscribe(list, req.QueryStringParameters["email"])
 	if err != nil {
 		return returnErr(err)
 	}

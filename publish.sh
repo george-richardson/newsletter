@@ -17,7 +17,7 @@ S3_BUCKET=$(aws cloudformation list-exports --query 'Exports[?Name==`NewsletterA
 __echo-green "Bucket found with name '$S3_BUCKET'"
 
 __echo-blue "Deleting existing artifacts..."
-rm out/*
+rm -rf out
 __echo-green "Deleted!"
 
 __echo-blue "Building new artifacts..."
