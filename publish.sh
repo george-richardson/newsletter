@@ -4,6 +4,8 @@ set -e
 ARTIFACT_PATH="out/newsletter"
 ZIP_PATH="out/newsletter.zip"
 STACK_NAME="newsletter"
+HOSTED_ZONE_NAME="gjhr.me"
+DOMAIN_NAME="newsletter.gjhr.me"
 
 . "$UTILS_PATH"
 
@@ -37,12 +39,17 @@ aws s3 cp "$ZIP_PATH" "$S3_PATH" || __error-red "Failed to upload artifact."
 __echo-green "Uploaded!"
 
 __echo-blue "Updating stack '$STACK_NAME'..."
+CERTIFICATE_ARN=$(aws cloudformation list-exports --region us-east-1 --query 'Exports[?Name==`NewsletterCertificate`].Value' --output text)
+HOSTED_ZONE_ID=$(aws route53 list-hosted-zones --query "HostedZones[?Name==\`$HOSTED_ZONE_NAME.\`"].Id --output text | cut -d '/' -f 3)
 aws cloudformation update-stack --stack-name "$STACK_NAME" \
   --template-body file://newsletter.cloudformation.yaml \
   --capabilities 'CAPABILITY_IAM' \
   --parameters \
     "ParameterKey=ArtifactPath,ParameterValue=$S3_FILE" \
-    "ParameterKey=ArtifactBucket,ParameterValue=$S3_BUCKET" || 
+    "ParameterKey=ArtifactBucket,ParameterValue=$S3_BUCKET" \
+    "ParameterKey=CertificateARN,ParameterValue=$CERTIFICATE_ARN" \
+    "ParameterKey=DomainName,ParameterValue=$DOMAIN_NAME" \
+    "ParameterKey=HostedZoneID,ParameterValue=$HOSTED_ZONE_ID" || 
   __error-red "Failed to update cloudformation"
 echo "Waiting for stack update to complete..."
 aws cloudformation wait stack-update-complete --stack-name "$STACK_NAME"

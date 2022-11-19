@@ -1,0 +1,26 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Parameters:
+  DomainName:
+    Type: String
+    Description: DNS name to request a certificate for
+  HostedZoneID:
+    Type: String
+    Description: ID of the hosted zone to use for domain validation
+
+Resources: 
+  NewsletterCertificate: 
+    Type: "AWS::CertificateManager::Certificate"
+    Properties: 
+      DomainName: !Ref DomainName
+      ValidationMethod: DNS
+      DomainValidationOptions: 
+        - DomainName: !Ref DomainName
+          HostedZoneId: !Ref HostedZoneID
+
+Outputs:
+  CertificateARN:
+    Description: ARN of the certificate. 
+    Value: !Ref NewsletterCertificate
+    Export:
+      Name: NewsletterCertificate

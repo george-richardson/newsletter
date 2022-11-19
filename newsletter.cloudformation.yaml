@@ -7,6 +7,15 @@ Parameters:
   ArtifactBucket:
     Type: String
     Description: Name of the S3 bucket which contains lambda artifacts.
+  DomainName:
+    Type: String
+    Description: DNS name for use by the newsletter system.
+  CertificateARN:
+    Type: String
+    Description: ARN of a certificate in us-east-1 to be used by API Gateway.
+  HostedZoneID:
+    Type: String
+    Description: ID of the hosted zone to use for domain validation
 
 Resources: 
   # DYNAMO
@@ -52,9 +61,18 @@ Resources:
       AttributeDefinitions: 
         - AttributeName: "name"
           AttributeType: "S"
+        - AttributeName: "domain"
+          AttributeType: "S"
       KeySchema: 
         - AttributeName: "name"
           KeyType: "HASH"
+      GlobalSecondaryIndexes:
+        - IndexName: domain
+          KeySchema:
+          - AttributeName: "domain"
+            KeyType: "HASH"
+          Projection:
+            ProjectionType: ALL
 
   # Lambda Role
   NewsletterLambdaRole:
@@ -162,6 +180,29 @@ Resources:
       RestApiId: !Ref NewsletterAPI
       Description: prod
       StageName: prod
+
+  # DNS
+  NewsletterDomain:
+    Type: 'AWS::ApiGateway::DomainName'
+    Properties:
+      DomainName: !Ref DomainName
+      CertificateArn: !Ref CertificateARN
+  Route53RecordSetGroup:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      Name: !Ref DomainName
+      Type: A
+      HostedZoneId: !Ref HostedZoneID
+      AliasTarget:
+        DNSName: !GetAtt NewsletterDomain.DistributionDomainName
+        EvaluateTargetHealth: false
+        HostedZoneId: !GetAtt NewsletterDomain.DistributionHostedZoneId
+  APIMapping:
+    Type: AWS::ApiGateway::BasePathMapping
+    Properties: 
+      DomainName: !Ref NewsletterDomain
+      RestApiId: !Ref NewsletterAPI
+      Stage: prod
 
 Outputs:
   NewsletterAPIID:

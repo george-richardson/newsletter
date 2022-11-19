@@ -24,12 +24,12 @@ func (s Subscription) FormatVerificationLink() string {
 	return fmt.Sprintf("FORMATTED_VERIFICATION_LINK?token=%v", s.VerificationToken)
 }
 
-func Subscribe(list, email string) error {
+func Subscribe(list, email string) (*Subscription, error) {
 	log.Infof("Subscribing '%v' to list '%v'...", email, list)
 	// Validate email
 	validAddress, err := mail.ParseAddress(email)
 	if err != nil {
-		return ERR_INVALID_EMAIL
+		return nil, ERR_INVALID_EMAIL
 	}
 	email = validAddress.Address
 
@@ -37,17 +37,17 @@ func Subscribe(list, email string) error {
 
 	subscription, err := getSubscription(list, email)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if subscription != nil {
-		return resendVerificationEmail(*subscription)
+		return subscription, resendVerificationEmail(*subscription)
 	}
 
 	// Generate verification token
 	uuid, err := uuid.NewUUID()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Save row to Dynamodb table
@@ -59,7 +59,7 @@ func Subscribe(list, email string) error {
 	}
 	av, err := dynamodbattribute.MarshalMap(subscription)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	_, err = dynamo.PutItem(&dynamodb.PutItemInput{
@@ -67,11 +67,11 @@ func Subscribe(list, email string) error {
 		TableName: &subscriptionsTableName,
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Send verification email
-	return sendVerificationEmail(*subscription)
+	return subscription, sendVerificationEmail(*subscription)
 }
 
 func resendVerificationEmail(subscription Subscription) error {
