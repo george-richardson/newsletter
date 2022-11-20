@@ -1,0 +1,39 @@
+{
+  "resource": "/",
+  "path": "",
+  "httpMethod": "GET",
+  "headers": {
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Accept-Language": "en-US,en;q=0.5",
+    "Host": "newsletter.gjhr.me"
+  },
+  "multiValueHeaders": {
+    "Host": [
+      "newsletter.gjhr.me"
+    ]
+  },
+  "queryStringParameters": null,
+  "multiValueQueryStringParameters": null,
+  "pathParameters": null,
+  "stageVariables": null,
+  "requestContext": {
+    "accountId": "123456789123",
+    "resourceId": "venevw77e4",
+    "stage": "prod",
+    "domainName": "newsletter.gjhr.me",
+    "domainPrefix": "newsletter",
+    "requestId": "2b0ebbe4-0680-4327-8bff-5a40b178cf38",
+    "extendedRequestId": "b65g0GmUjoEF0dA=",
+    "protocol": "HTTP/1.1",
+    "identity": {},
+    "resourcePath": "/",
+    "path": "/",
+    "authorizer": null,
+    "httpMethod": "GET",
+    "requestTime": "20/Nov/2022:21:57:37 +0000",
+    "requestTimeEpoch": 1668981457844,
+    "apiId": "v928sufo67"
+  },
+  "body": ""
+}

@@ -10,9 +10,10 @@
       "request": "launch",
       "mode": "auto",
       "program": "./",
-      "preLaunchTask": "aws-vault",
       "env": {
-        "AWS_REGION": "eu-west-1"
+        "AWS_REGION": "eu-west-1",
+        "_LAMBDA_SERVER_PORT": "8080",
+        "NEWSLETTER_LOG_LEVEL": "debug"
       }
     }
   ]

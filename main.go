@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"os"
 	"strings"
 	"text/template"
 
@@ -23,8 +25,13 @@ type htmlContent struct {
 }
 
 func init() {
+	envLogLevel := os.Getenv("NEWSLETTER_LOG_LEVEL")
+	if envLogLevel != "" {
+		log.SetLevelFromString(envLogLevel)
+	}
+
 	var err error
-	router = lmdrouter.NewRouter("")
+	router = lmdrouter.NewRouter("", loggerMiddleware)
 
 	// GETs because these are primarily interacted through with links
 	router.Route("GET", "/", root)
@@ -120,7 +127,31 @@ func init() {
 	}
 }
 
+func loggerMiddleware(next lmdrouter.Handler) lmdrouter.Handler {
+	return func(ctx context.Context, req events.APIGatewayProxyRequest) (
+		res events.APIGatewayProxyResponse,
+		err error,
+	) {
+		logger := log.WithFields(log.Fields{
+			"request_id":     req.RequestContext.RequestID,
+			"request_method": req.HTTPMethod,
+			"request_host":   req.RequestContext.DomainName,
+			"request_path":   req.Path,
+		})
+		if logger.Level == log.DebugLevel {
+			reqJson, _ := json.Marshal(req)
+			logger.Debug(string(reqJson))
+		}
+		ctx = context.WithValue(ctx, "log", logger)
+		return next(ctx, req)
+	}
+}
+
 func main() {
+	InternalMain()
+}
+
+func InternalMain() {
 	lambda.Start(router.Handler)
 }
 

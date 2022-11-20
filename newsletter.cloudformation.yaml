@@ -128,6 +128,9 @@ Resources:
         S3Bucket: !Ref ArtifactBucket
         S3Key: !Ref ArtifactPath
       Description: Newsletter service handler.
+      Environment:
+        Variables:
+          NEWSLETTER_LOG_LEVEL: debug
   NewsletterLambdaAPIGatewayPermission:
     Type: AWS::Lambda::Permission
     Properties:

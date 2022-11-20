@@ -1,16 +1,53 @@
 {
+  "inputs": [
+    {
+      "id": "event-json",
+      "type": "command",
+      "command": "filePicker.pick",
+      "args": {
+        "masks": "events/*.json",
+        "display": {
+          "type": "fileName",
+          "json": "name"
+        },
+        "output": "fileRelativePath"
+      }
+    }
+  ],
   "tasks": [
     {
       "label": "aws-vault",
       "type": "process",
       "command": "aws-vault",
       "problemMatcher": [],
-      "isBackground": true,
+      "isBackground": false,
       "args": [
         "exec",
         "gjhr-me",
         "-s"
-      ]
+      ],
+      "presentation": {
+        "echo": true,
+        "reveal": "never",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      }
+    },
+    {
+      "label": "run-event",
+      "type": "shell",
+      "command": "go run github.com/blmayer/awslambdarpc -e ${input:event-json}",
+      "problemMatcher": [],
+      "presentation": {
+        "echo": true,
+        "reveal": "never",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      }
     }
   ]
 }
