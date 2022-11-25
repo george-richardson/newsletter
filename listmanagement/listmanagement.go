@@ -2,6 +2,7 @@ package listmanagement
 
 import (
 	"errors"
+	"os"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -28,7 +29,6 @@ func init() {
 	}))
 
 	dynamo = dynamodb.New(sess)
-	// TODO configure these dynamically
-	subscriptionsTableName = "subscriptions"
-	listsTableName = "lists"
+	subscriptionsTableName = os.Getenv("NEWSLETTER_SUBSCRIPTIONS_TABLE")
+	listsTableName = os.Getenv("NEWSLETTER_LISTS_TABLE")
 }

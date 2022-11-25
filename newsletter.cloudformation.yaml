@@ -16,13 +16,16 @@ Parameters:
   HostedZoneID:
     Type: String
     Description: ID of the hosted zone to use for domain validation
+  Name:
+    Type: String
+    Description: Used to differentiate multiple installations.
+    Default: "newsletter"
 
 Resources: 
   # DYNAMO
   SubscriptionsTable: 
     Type: AWS::DynamoDB::Table
     Properties: 
-      TableName: "subscriptions"
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions: 
         - AttributeName: "email"
@@ -56,7 +59,6 @@ Resources:
   ListsTable: 
     Type: AWS::DynamoDB::Table
     Properties: 
-      TableName: "lists"
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions: 
         - AttributeName: "name"
@@ -131,6 +133,8 @@ Resources:
       Environment:
         Variables:
           NEWSLETTER_LOG_LEVEL: debug
+          NEWSLETTER_SUBSCRIPTIONS_TABLE: !Ref SubscriptionsTable
+          NEWSLETTER_LISTS_TABLE: !Ref ListsTable
   NewsletterLambdaAPIGatewayPermission:
     Type: AWS::Lambda::Permission
     Properties:
@@ -144,8 +148,8 @@ Resources:
   NewsletterAPI:
     Type: AWS::ApiGateway::RestApi
     Properties:
+      Name: !Ref Name
       Description: Backend API for newsletter management
-      Name: NewsletterAPI
   LambdaProxyResource:
     Type: 'AWS::ApiGateway::Resource'
     Properties:
@@ -181,8 +185,8 @@ Resources:
     Type: 'AWS::ApiGateway::Deployment'
     Properties:
       RestApiId: !Ref NewsletterAPI
-      Description: prod
-      StageName: prod
+      Description: main
+      StageName: main
 
   # DNS
   NewsletterDomain:
@@ -205,11 +209,9 @@ Resources:
     Properties: 
       DomainName: !Ref NewsletterDomain
       RestApiId: !Ref NewsletterAPI
-      Stage: prod
+      Stage: main
 
 Outputs:
   NewsletterAPIID:
     Description: ID of the deployed API Gateway
     Value: !Ref NewsletterAPI
-    Export:
-      Name: NewsletterAPIID
