@@ -5,20 +5,15 @@ import (
 	"strings"
 
 	"github.com/apex/log"
-
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sesv2"
+	naws "gjhr.me/newsletter/providers/aws"
 )
 
 var ses *sesv2.SESV2
 
 func init() {
-	sess := session.Must(session.NewSessionWithOptions(session.Options{
-		SharedConfigState: session.SharedConfigEnable,
-	}))
-
-	ses = sesv2.New(sess)
+	ses = naws.SES()
 }
 
 func SendMail(email string, sender string, replyTo string, subject string, template *template.Template, data interface{}) error {

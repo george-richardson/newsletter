@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"os"
 	"strings"
 	"text/template"
 
@@ -11,7 +10,10 @@ import (
 	"github.com/aquasecurity/lmdrouter"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	"gjhr.me/newsletter/listmanagement"
+	"gjhr.me/newsletter/data/list"
+	"gjhr.me/newsletter/data/subscription"
+	"gjhr.me/newsletter/providers/config"
+	"gjhr.me/newsletter/subscriptionflow"
 )
 
 var router *lmdrouter.Router
@@ -19,13 +21,13 @@ var templates *template.Template
 
 type htmlContent struct {
 	Title        string
-	List         *listmanagement.List
-	Subscription *listmanagement.Subscription
+	List         *list.List
+	Subscription *subscription.Subscription
 	Err          error
 }
 
 func init() {
-	envLogLevel := os.Getenv("NEWSLETTER_LOG_LEVEL")
+	envLogLevel := config.Get().LogLevel
 	if envLogLevel != "" {
 		log.SetLevelFromString(envLogLevel)
 	}
@@ -156,7 +158,7 @@ func InternalMain() {
 }
 
 func root(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	list, err := listmanagement.GetListByDomain(req.RequestContext.DomainName)
+	list, err := list.GetFromDomain(req.RequestContext.DomainName)
 	if err != nil {
 		return returnErr(err)
 	}
@@ -164,7 +166,7 @@ func root(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGat
 }
 
 func subscribe(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	list, err := listmanagement.GetListByDomain(req.RequestContext.DomainName)
+	list, err := list.GetFromDomain(req.RequestContext.DomainName)
 	if err != nil {
 		return returnErr(err)
 	}
@@ -176,7 +178,7 @@ func subscribe(ctx context.Context, req events.APIGatewayProxyRequest) (events.A
 }
 
 func unsubscribe(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	list, err := listmanagement.GetListByDomain(req.RequestContext.DomainName)
+	list, err := list.GetFromDomain(req.RequestContext.DomainName)
 	if err != nil {
 		return returnErr(err)
 	}
@@ -188,7 +190,7 @@ func unsubscribe(ctx context.Context, req events.APIGatewayProxyRequest) (events
 }
 
 func verify(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	list, err := listmanagement.GetListByDomain(req.RequestContext.DomainName)
+	list, err := list.GetFromDomain(req.RequestContext.DomainName)
 	if err != nil {
 		return returnErr(err)
 	}
