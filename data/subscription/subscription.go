@@ -29,17 +29,17 @@ type Subscription struct {
 }
 
 func Get(list, email string) (*Subscription, error) {
-	var sub *Subscription
-	err := table.Get("list", list).Range("email", dynamo.Equal, email).One(sub)
+	var sub Subscription
+	err := table.Get("list", list).Range("email", dynamo.Equal, email).One(&sub)
 	if err != nil {
 		return nil, err // todo return sub not found error
 	}
-	return sub, nil
+	return &sub, nil
 }
 
 func GetFromToken(token string) (*Subscription, error) {
 	var subs []*Subscription
-	err := table.Scan().Index("verification-token").Filter("'verification_token' = ?", token).All(subs)
+	err := table.Scan().Index("verification-token").Filter("'verification_token' = ?", token).All(&subs)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func (sub *Subscription) UpdateLastSentVerification() error {
 }
 
 func (sub *Subscription) Verify() error {
-	return sub.update().Set("verified", true).Run()
+	return sub.update().Set("verified", "true").Run()
 }
 
 func (sub *Subscription) Delete() error {

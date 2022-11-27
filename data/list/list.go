@@ -42,12 +42,12 @@ func (lst *List) FormatVerificationLink(sub subscription.Subscription) string {
 }
 
 func Get(name string) (*List, error) {
-	var lst *List
-	err := table.Get("name", name).One(lst)
+	var lst List
+	err := table.Get("name", name).One(&lst)
 	if err != nil {
 		return nil, err
 	}
-	return lst, nil
+	return &lst, nil
 }
 
 func GetFromDomain(domain string) (*List, error) {

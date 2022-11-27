@@ -1,0 +1,51 @@
+{
+  "resource": "/{proxy+}",
+  "path": "/verify",
+  "httpMethod": "GET",
+  "headers": {
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Host": "newsletter-dev.gjhr.me"
+  },
+  "multiValueHeaders": {
+    "Accept": [
+      "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"
+    ],
+    "Accept-Encoding": [
+      "gzip, deflate, br"
+    ],
+    "Host": [
+      "newsletter-dev.gjhr.me"
+    ]
+  },
+  "queryStringParameters": {
+    "token": "0e317504-6e9a-11ed-a523-92f8851474cb"
+  },
+  "multiValueQueryStringParameters": {
+    "token": [
+      "0e317504-6e9a-11ed-a523-92f8851474cb"
+    ]
+  },
+  "pathParameters": {
+    "proxy": "verify"
+  },
+  "stageVariables": null,
+  "requestContext": {
+    "accountId": "123456789123",
+    "resourceId": "26tnpj",
+    "stage": "main",
+    "domainName": "newsletter-dev.gjhr.me",
+    "domainPrefix": "newsletter-dev",
+    "requestId": "cb7da45f-5b91-45c1-bdb8-c71a9d4f55c3",
+    "extendedRequestId": "cR4f9FeWjoEFmrg=",
+    "protocol": "HTTP/1.1",
+    "resourcePath": "/{proxy+}",
+    "path": "/verify",
+    "authorizer": null,
+    "httpMethod": "GET",
+    "requestTime": "27/Nov/2022:21:19:33 +0000",
+    "requestTimeEpoch": 1669583973906,
+    "apiId": "topqmqyqu5"
+  },
+  "body": ""
+}
