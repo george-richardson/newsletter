@@ -12,6 +12,7 @@ import (
 const (
 	ERR_SUBSCRIPTION_NOT_FOUND       = consterror.ConstError("Subscription not found")
 	ERR_MULTIPLE_SUBSCRIPTIONS_FOUND = consterror.ConstError("Multiple subscriptions have been found")
+	ERR_FAILED_TO_DELETE_ALL         = consterror.ConstError("One or more subscriptions failed to be deleted")
 )
 
 var table dynamo.Table
@@ -50,6 +51,26 @@ func GetFromToken(token string) (*Subscription, error) {
 		return nil, ERR_MULTIPLE_SUBSCRIPTIONS_FOUND
 	}
 	return subs[0], nil
+}
+
+func DeleteAllForEmail(email string) error {
+	var subs []Subscription
+	err := table.Scan().Index("email").All(&subs)
+	if err != nil {
+		return err
+	}
+	// Attempt to delete all
+	hasErrored := false
+	for _, sub := range subs {
+		if sub.Delete() != nil {
+			// We must continue as this function is used to deal with bounces/complaints
+			hasErrored = true
+		}
+	}
+	if hasErrored {
+		return ERR_FAILED_TO_DELETE_ALL
+	}
+	return nil
 }
 
 func Put(sub *Subscription) error {

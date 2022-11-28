@@ -22,7 +22,8 @@ rm -rf out
 __echo-green "Deleted!"
 
 __echo-blue "Building new artifacts..."
-CGO_ENABLED=0 go build -o out/ || __error-red "Failed to build package."
+CGO_ENABLED=0 go build lambdas/frontend -o out/ || __error-red "Failed to build frontend package."
+CGO_ENABLED=0 go build lambdas/bouncehandler -o out/ || __error-red "Failed to build bouncehandler package."
 __echo-green "Built!"
 
 __echo-blue "Getting SHA1 of new artifact..."

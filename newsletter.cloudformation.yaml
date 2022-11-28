@@ -77,7 +77,7 @@ Resources:
             ProjectionType: ALL
 
   # Lambda Role
-  NewsletterLambdaRole:
+  FrontendLambdaRole:
     Type: 'AWS::IAM::Role'
     Properties:
       AssumeRolePolicyDocument:
@@ -119,31 +119,45 @@ Resources:
                   - "ses:SendBulkEmail"
                 Resource: '*'
 
-  # Lambda
-  NewsletterLambda:
+  # Lambdas
+  # Frontend
+  FrontendLambda:
     Type: AWS::Lambda::Function
     Properties:
       Runtime: go1.x
-      Role: !GetAtt [NewsletterLambdaRole, Arn]
-      Handler: newsletter
+      Role: !GetAtt [FrontendLambdaRole, Arn]
+      Handler: frontend
       Code: 
         S3Bucket: !Ref ArtifactBucket
         S3Key: !Ref ArtifactPath
-      Description: Newsletter service handler.
+      Description: Newsletter frontend.
       Environment:
         Variables:
           NEWSLETTER_LOG_LEVEL: debug
           NEWSLETTER_SUBSCRIPTIONS_TABLE: !Ref SubscriptionsTable
           NEWSLETTER_LISTS_TABLE: !Ref ListsTable
-  NewsletterLambdaAPIGatewayPermission:
+  FrontendLambdaAPIGatewayPermission:
     Type: AWS::Lambda::Permission
     Properties:
-      FunctionName: !GetAtt NewsletterLambda.Arn
+      FunctionName: !GetAtt FrontendLambda.Arn
       Action: lambda:InvokeFunction
       Principal: apigateway.amazonaws.com
       SourceAccount: !Ref 'AWS::AccountId'
       SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${NewsletterAPI}/*/*/*"
-
+  # Bounce Handler
+  BounceHandlerLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: go1.x
+      Role: !GetAtt [FrontendLambdaRole, Arn] # TODO use own role
+      Handler: bouncehandler
+      Code: 
+        S3Bucket: !Ref ArtifactBucket
+        S3Key: !Ref ArtifactPath
+      Description: Newsletter bounce handler.
+      Environment:
+        Variables:
+          NEWSLETTER_SUBSCRIPTIONS_TABLE: !Ref SubscriptionsTable
   # API Gateway
   NewsletterAPI:
     Type: AWS::ApiGateway::RestApi
@@ -167,7 +181,7 @@ Resources:
         Type: AWS_PROXY
         IntegrationHttpMethod: POST
         Uri: !Sub >-
-          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${NewsletterLambda.Arn}/invocations
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${FrontendLambda.Arn}/invocations
   LambdaProxyResourceANYRoot:
     Type: 'AWS::ApiGateway::Method'
     Properties:
@@ -179,7 +193,7 @@ Resources:
         Type: AWS_PROXY
         IntegrationHttpMethod: POST
         Uri: !Sub >-
-          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${NewsletterLambda.Arn}/invocations
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${FrontendLambda.Arn}/invocations
   NewsletterAPIDeployment:
     DependsOn: LambdaProxyResourceANY
     Type: 'AWS::ApiGateway::Deployment'
