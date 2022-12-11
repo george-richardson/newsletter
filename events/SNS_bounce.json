@@ -1,0 +1,22 @@
+{
+  "Records": [
+    {
+      "EventVersion": "1.0",
+      "EventSubscriptionArn": "arn:aws:sns:eu-west-1:123456789123:newsletter-dev-ComplaintsTopic-foo:911a37ca-895b-4433-a137-19490006c5c6",
+      "EventSource": "aws:sns",
+      "Sns": {
+        "Signature": "foo",
+        "MessageId": "90d45263-d400-59c3-896a-0e6c3f296676",
+        "Type": "Notification",
+        "TopicArn": "arn:aws:sns:eu-west-1:123456789123:newsletter-dev-ComplaintsTopic-foo",
+        "MessageAttributes": {},
+        "SignatureVersion": "1",
+        "Timestamp": "2022-12-11T14:27:53.845Z",
+        "SigningCertUrl": "https://sns.eu-west-1.amazonaws.com/SimpleNotificationService-56e67fcb41f6fec09b0196692625d385.pem",
+        "Message": "{\"notificationType\":\"Bounce\",\"bounce\":{\"feedbackId\":\"010201850195d0d0-77732c5a-76d4-4aa9-9c2a-747139cb42d3-000000\",\"bounceType\":\"Permanent\",\"bounceSubType\":\"General\",\"bouncedRecipients\":[{\"emailAddress\":\"success@simulator.amazonses.com\",\"action\":\"failed\",\"status\":\"5.1.1\",\"diagnosticCode\":\"smtp; 550 5.1.1 user unknown\"}],\"timestamp\":\"2022-12-11T14:27:53.000Z\",\"remoteMtaIp\":\"18.210.177.2\",\"reportingMTA\":\"dns; a7-43.smtp-out.eu-west-1.amazonses.com\"},\"mail\":{\"timestamp\":\"2022-12-11T14:27:52.792Z\",\"source\":\"asfasf@newsletter-dev.gjhr.me\",\"sourceArn\":\"arn:aws:ses:eu-west-1:123456789123:identity/newsletter-dev.gjhr.me\",\"sourceIp\":\"212.132.251.107\",\"callerIdentity\":\"OrganizationAccountAccessRole\",\"sendingAccountId\":\"123456789123\",\"messageId\":\"010201850195cd58-33710b1a-76b2-4fd0-9ed5-06652a716a30-000000\",\"destination\":[\"success@simulator.amazonses.com\"]}}",
+        "UnsubscribeUrl": "https://sns.eu-west-1.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws:sns:eu-west-1:123456789123:newsletter-dev-ComplaintsTopic-foo:911a37ca-895b-4433-a137-19490006c5c6",
+        "Subject": ""
+      }
+    }
+  ]
+}

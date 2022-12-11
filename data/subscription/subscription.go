@@ -33,7 +33,7 @@ func Get(list, email string) (*Subscription, error) {
 	var sub Subscription
 	err := table.Get("list", list).Range("email", dynamo.Equal, email).One(&sub)
 	if err != nil {
-		return nil, err // todo return sub not found error
+		return nil, ERR_SUBSCRIPTION_NOT_FOUND
 	}
 	return &sub, nil
 }
@@ -55,7 +55,7 @@ func GetFromToken(token string) (*Subscription, error) {
 
 func DeleteAllForEmail(email string) error {
 	var subs []Subscription
-	err := table.Scan().Index("email").All(&subs)
+	err := table.Scan().Index("email").Filter("'email' = ?", email).All(&subs)
 	if err != nil {
 		return err
 	}

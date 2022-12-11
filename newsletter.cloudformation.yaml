@@ -56,6 +56,14 @@ Resources:
               KeyType: "HASH"
           Projection:
             ProjectionType: KEYS_ONLY
+        - IndexName: email
+          KeySchema: 
+            - AttributeName: "email"
+              KeyType: "HASH"
+            - AttributeName: "list"
+              KeyType: "RANGE"
+          Projection:
+            ProjectionType: KEYS_ONLY
   ListsTable: 
     Type: AWS::DynamoDB::Table
     Properties: 
@@ -157,7 +165,16 @@ Resources:
       Description: Newsletter bounce handler.
       Environment:
         Variables:
+          NEWSLETTER_LOG_LEVEL: debug
           NEWSLETTER_SUBSCRIPTIONS_TABLE: !Ref SubscriptionsTable
+  BounceHandlerLambdaSNSPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt BounceHandlerLambda.Arn
+      Action: lambda:InvokeFunction
+      Principal: sns.amazonaws.com
+      SourceAccount: !Ref 'AWS::AccountId'
+      SourceArn: !Ref ComplaintsTopic
   # API Gateway
   NewsletterAPI:
     Type: AWS::ApiGateway::RestApi
@@ -224,6 +241,34 @@ Resources:
       DomainName: !Ref NewsletterDomain
       RestApiId: !Ref NewsletterAPI
       Stage: main
+
+  # SES Complaints Notifications
+  # TODO automate SES configuration to use this topic
+  ComplaintsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Subscription:
+        - Endpoint: !GetAtt BounceHandlerLambda.Arn
+          Protocol: lambda
+  ComplaintsTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties: 
+      PolicyDocument: 
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action: 
+              - "sns:Publish"
+            Principal: 
+              Service: "ses.amazonaws.com"
+            Resource:
+              - !Ref ComplaintsTopic
+            Condition:
+              StringEquals:
+                "AWS:SourceAccount": !Ref "AWS::AccountId"
+                "AWS:SourceArn": !Sub "arn:aws:ses:${AWS::Region}:${AWS::AccountId}:identity/${DomainName}"
+      Topics: 
+        - !Ref ComplaintsTopic
 
 Outputs:
   NewsletterAPIID:

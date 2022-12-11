@@ -1,7 +1,7 @@
 #!/bin/zsh
 set -e
 
-ARTIFACT_PATH="out/newsletter"
+ARTIFACT_PATH="out/"
 ZIP_PATH="out/newsletter.zip"
 STACK_NAME="newsletter-dev"
 HOSTED_ZONE_NAME="gjhr.me"
@@ -22,16 +22,16 @@ rm -rf out
 __echo-green "Deleted!"
 
 __echo-blue "Building new artifacts..."
-CGO_ENABLED=0 go build lambdas/frontend -o out/ || __error-red "Failed to build frontend package."
-CGO_ENABLED=0 go build lambdas/bouncehandler -o out/ || __error-red "Failed to build bouncehandler package."
+CGO_ENABLED=0 go build -o ./out/ ./lambdas/frontend || __error-red "Failed to build frontend package."
+CGO_ENABLED=0 go build -o ./out/ ./lambdas/bouncehandler || __error-red "Failed to build bouncehandler package."
 __echo-green "Built!"
 
 __echo-blue "Getting SHA1 of new artifact..."
-ARTIFACT_SHASUM=$(sha1sum "$ARTIFACT_PATH" | cut -d ' ' -f 1)
+ARTIFACT_SHASUM=$(sha1sum "$ARTIFACT_PATH"/* | sha1sum | cut -d ' ' -f 1)
 __echo-green "Got SHA1 '$ARTIFACT_SHASUM'"
 
 __echo-blue "Zipping new artifact to '$ZIP_PATH'..."
-zip -j "$ZIP_PATH" "$ARTIFACT_PATH"
+zip -j "$ZIP_PATH" "$ARTIFACT_PATH"/*
 __echo-green "Zipped!"
 
 S3_FILE="$ARTIFACT_SHASUM.zip"

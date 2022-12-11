@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"os"
+
 	"github.com/apex/log"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -10,13 +12,22 @@ import (
 )
 
 func main() {
+	loglevel := os.Getenv("NEWSLETTER_LOG_LEVEL")
+	if loglevel != "" {
+		log.SetLevelFromString(loglevel)
+	}
 	lambda.Start(Handle)
 }
 
 func Handle(ctx context.Context, event events.SNSEvent) {
+	logger := log.WithFields(log.Fields{})
+	if logger.Level == log.DebugLevel {
+		reqJson, _ := json.Marshal(event)
+		log.Debug(string(reqJson))
+	}
 	hasErrored := false
 	for _, record := range event.Records {
-		log.Info(record.SNS.Message)
+		log.Debug(record.SNS.Message)
 		var message Message
 		err := json.Unmarshal([]byte(record.SNS.Message), &message)
 		if err != nil {

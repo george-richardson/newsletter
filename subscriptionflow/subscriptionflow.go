@@ -33,7 +33,7 @@ func Subscribe(list *list.List, email string) (*subscription.Subscription, error
 	email = validAddress.Address
 
 	sub, err := subscription.Get(list.Name, email)
-	if err != nil {
+	if err != nil && err != subscription.ERR_SUBSCRIPTION_NOT_FOUND {
 		return nil, err
 	}
 
