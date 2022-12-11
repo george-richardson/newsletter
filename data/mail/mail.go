@@ -12,3 +12,17 @@ type Mail struct {
 	TemplateBucket string                    `json:"template_bucket"`
 	TemplateKey    string                    `json:"template_key"`
 }
+
+func (m *Mail) GetMailTemplateValues() MailTemplateValues {
+	return MailTemplateValues{
+		UnsubscribeLink: m.List.FormatUnsubscribeLink(m.Subscription),
+		ListName:        m.List.Name,
+		Email:           m.Subscription.Email,
+	}
+}
+
+type MailTemplateValues struct {
+	UnsubscribeLink string
+	ListName        string
+	Email           string
+}

@@ -22,11 +22,11 @@ func init() {
 }
 
 type Subscription struct {
-	Email                string    `dynamo:"email"`
-	List                 string    `dynamo:"list"`
-	VerificationToken    string    `dynamo:"verification_token"`
-	Verified             string    `dynamo:"verified,omitempty"`
-	LastSentVerification time.Time `dynamo:"last_sent_verification,unixtime"`
+	Email                string    `dynamo:"email" json:"email"`
+	List                 string    `dynamo:"list" json:"list"`
+	VerificationToken    string    `dynamo:"verification_token" json:"verification_token"`
+	Verified             string    `dynamo:"verified,omitempty" json:"verified"`
+	LastSentVerification time.Time `dynamo:"last_sent_verification,unixtime" json:"-"`
 }
 
 func Get(list, email string) (*Subscription, error) {

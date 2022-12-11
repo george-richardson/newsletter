@@ -1,0 +1,24 @@
+{
+  "Records": [
+    {
+      "messageId": "51953349-c060-4fd5-af69-913d42527037",
+      "receiptHandle": "AQEBiYkGNj1dz4OKV3jTIM27X6ggyEbLi7Y22jzC5hjvGdjlipz2ODMtsIQTPOuDaoI5vWm33Xp1z0f6R1i2lz0ZoGUKViArOzbFfvPIH5NNI3WIlngjhGWHCAXtrFX5M8qaqZp7XJziZjcOQw3cbabRb6EUpMqvg6K2BFtAU/l09ZxlBWkNdo9bCobxNaXngwY5btGqD2/GQeOK42IuYhQ66WJGsh8pIqyGxRbeGXYBVSoLnQk+mjnEenUp5He5Zy6JiePP0GE3hB0A4yi5RjuXRI3fMn3Z4HOd98tsKOXXeMMBnvGn5YvtqCb8SJG6Aqq8",
+      "body": "{\n  \"subscription\": {\n    \"email\": \"success@simulator.amazonses.com\",\n    \"list\": \"test\",\n    \"last_sent_verification\": \"1670791887\",\n    \"verification_token\": \"94f3fee0-7995-11ed-a29e-baeb92b2c054\",\n    \"verified\": \"true\"\n  },\n  \"list\": {\n    \"name\": \"test\",\n    \"description\": \"THIS IS A TEST NEWSLETTER.\",\n    \"domain\": \"simulator.amazonses.com\",\n    \"from_address\": \"success@simulator.amazonses.com\",\n    \"reply_to_address\": \"success@simulator.amazonses.com\"\n  }, \n  \"subject\": \"Did it work?\",\n  \"template_bucket\": \"newsletter-dev-emailtemplatesbucket-1u0g8gqt7siuc\",\n  \"template_key\": \"foo.html\"\n}",
+      "md5OfBody": "4b30dc870f599cbad1575f82bb1ba10e",
+      "md5OfMessageAttributes": "",
+      "attributes": {
+        "ApproximateFirstReceiveTimestamp": "1670791975817",
+        "ApproximateReceiveCount": "1",
+        "MessageDeduplicationId": "foobar",
+        "MessageGroupId": "asfsaf",
+        "SenderId": "AROAQABS7THS4WI76BM37:1670790009987792295",
+        "SentTimestamp": "1670791975817",
+        "SequenceNumber": "18874466819518704896"
+      },
+      "messageAttributes": {},
+      "eventSourceARN": "arn:aws:sqs:eu-west-1:123456789123:newsletter-dev-SenderQueue-foo.fifo",
+      "eventSource": "aws:sqs",
+      "awsRegion": "eu-west-1"
+    }
+  ]
+}

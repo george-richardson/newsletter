@@ -17,6 +17,7 @@ func init() {
 }
 
 func SendMail(email string, sender string, replyTo string, subject string, template *template.Template, data interface{}) error {
+	//todo add List-Unsubscribe header using raw email
 	log.Infof("Sending email with subject '%v' to '%v'...", subject, email)
 	// Format the body
 	sb := &strings.Builder{}

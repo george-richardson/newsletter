@@ -24,6 +24,7 @@ __echo-green "Deleted!"
 __echo-blue "Building new artifacts..."
 CGO_ENABLED=0 go build -o ./out/ ./lambdas/frontend || __error-red "Failed to build frontend package."
 CGO_ENABLED=0 go build -o ./out/ ./lambdas/bouncehandler || __error-red "Failed to build bouncehandler package."
+CGO_ENABLED=0 go build -o ./out/ ./lambdas/sender || __error-red "Failed to build sender package."
 __echo-green "Built!"
 
 __echo-blue "Getting SHA1 of new artifact..."

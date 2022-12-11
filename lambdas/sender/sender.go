@@ -29,35 +29,43 @@ func main() {
 }
 
 func Handle(ctx context.Context, event events.SQSEvent) error {
-	logger := log.WithFields(log.Fields{})
-	if logger.Level == log.DebugLevel {
-		reqJson, _ := json.Marshal(event)
-		log.Debug(string(reqJson))
-	}
+	reqJson, _ := json.Marshal(event)
+	log.Debug(string(reqJson))
 
 	for _, record := range event.Records {
+		logger := log.WithFields(log.Fields{
+			"MessageId": record.MessageId,
+		})
 		// Unmarshal message
 		mail := mail.Mail{}
 		err := json.Unmarshal([]byte(record.Body), &mail)
 		if err != nil {
+			logger.WithError(err).Error("Error while unmarshaling message from queue")
 			return err
 		}
 
+		logger.Infof("Processing mail for '%v' with subject '%v'...", mail.Subscription.Email, mail.Subject)
+
 		// Download template
+		logger.Debugf("Downloading template from bucket '%v' key '%v'", mail.TemplateBucket, mail.TemplateKey)
 		res, err := aws.S3().GetObject(&s3.GetObjectInput{
 			Bucket: &mail.TemplateBucket,
 			Key:    &mail.TemplateKey,
 		})
 		if err != nil {
+			logger.WithError(err).Error("Error downloading template")
 			return err
 		}
 		buf := new(strings.Builder)
 		_, err = io.Copy(buf, res.Body)
 		if err != nil {
+			logger.WithError(err).Error("Error reading template")
 			return err
 		}
+		logger.Debugf("Parsing template:\n%v", buf.String())
 		t, err := template.New("body").Parse(buf.String())
 		if err != nil {
+			logger.WithError(err).Error("Error parsing template")
 			return err
 		}
 
@@ -67,16 +75,23 @@ func Handle(ctx context.Context, event events.SQSEvent) error {
 		queueUrl := fmt.Sprintf("https://sqs.%v.amazonaws.com/%v/%v", queueArn.Region, queueArn.AccountID, queueArn.Resource)
 
 		// Send mail
-		err = emailsender.SendMail(mail.Subscription.Email, mail.List.FromAddress, mail.List.ReplyToAddress, mail.Subject, t, mail) //todo use real message content here
+		logger.Debugf("Sending mail to '%v'", mail.Subscription.Email)
+		err = emailsender.SendMail(mail.Subscription.Email, mail.List.FromAddress, mail.List.ReplyToAddress, mail.Subject, t, mail.GetMailTemplateValues()) //todo use real message content here
 		if err != nil {
+			logger.WithError(err).Error("Error sending mail")
 			return err
 		}
 
 		// Delete message from queue
-		aws.SQS().DeleteMessage(&sqs.DeleteMessageInput{
+		logger.Debugf("Deleting message from queue")
+		_, err = aws.SQS().DeleteMessage(&sqs.DeleteMessageInput{
 			QueueUrl:      &queueUrl,
 			ReceiptHandle: &record.ReceiptHandle,
 		})
+		if err != nil {
+			logger.WithError(err).Error("Error deleting message from queue")
+			return err
+		}
 	}
 
 	return nil

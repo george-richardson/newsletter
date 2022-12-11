@@ -22,11 +22,11 @@ func init() {
 }
 
 type List struct {
-	Name           string `dynamo:"name"`
-	Description    string `dynamo:"description"`
-	Domain         string `dynamo:"domain"`
-	FromAddress    string `dynamo:"from_address"`
-	ReplyToAddress string `dynamo:"reply_to_address"`
+	Name           string `dynamo:"name" json:"name"`
+	Description    string `dynamo:"description" json:"description"`
+	Domain         string `dynamo:"domain" json:"domain"`
+	FromAddress    string `dynamo:"from_address" json:"from_address"`
+	ReplyToAddress string `dynamo:"reply_to_address" json:"reply_to_address"`
 }
 
 func (lst *List) FormatBaseURL() string {

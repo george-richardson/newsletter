@@ -126,6 +126,42 @@ Resources:
                   - "ses:SendEmail"
                   - "ses:SendBulkEmail"
                 Resource: '*'
+  SenderLambdaRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - "ses:SendEmail"
+                  - "ses:SendBulkEmail"
+                Resource: '*'
+              - Effect: Allow
+                Action: 
+                  - "s3:GetObject"
+                Resource: !Sub "${EmailTemplatesBucket.Arn}/*"
+              - Effect: Allow
+                Action: 
+                  - sqs:ReceiveMessage
+                  - sqs:DeleteMessage
+                  - sqs:GetQueueAttributes
+                  - sqs:ChangeMessageVisibility
+                Resource: !GetAtt SenderQueue.Arn
 
   # Lambdas
   # Frontend
@@ -175,6 +211,27 @@ Resources:
       Principal: sns.amazonaws.com
       SourceAccount: !Ref 'AWS::AccountId'
       SourceArn: !Ref ComplaintsTopic
+  # Sender
+  SenderLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: go1.x
+      Role: !GetAtt [SenderLambdaRole, Arn]
+      Handler: sender
+      Code: 
+        S3Bucket: !Ref ArtifactBucket
+        S3Key: !Ref ArtifactPath
+      Description: Newsletter frontend.
+      Environment:
+        Variables:
+          NEWSLETTER_LOG_LEVEL: debug
+  SenderLambdaEventSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      BatchSize: 10
+      Enabled: true
+      EventSourceArn: !GetAtt SenderQueue.Arn
+      FunctionName: !GetAtt SenderLambda.Arn
   # API Gateway
   NewsletterAPI:
     Type: AWS::ApiGateway::RestApi
@@ -269,6 +326,25 @@ Resources:
                 "AWS:SourceArn": !Sub "arn:aws:ses:${AWS::Region}:${AWS::AccountId}:identity/${DomainName}"
       Topics: 
         - !Ref ComplaintsTopic
+
+  # Email template objects
+  EmailTemplatesBucket:
+    Type: 'AWS::S3::Bucket'
+
+
+  # Sender queue
+  SenderQueue: 
+    Type: AWS::SQS::Queue
+    Properties: 
+      FifoQueue: true
+      VisibilityTimeout: 901 # 15m1s
+      RedrivePolicy: 
+        deadLetterTargetArn: !GetAtt "SenderDeadLetterQueue.Arn"
+        maxReceiveCount: 3
+  SenderDeadLetterQueue: 
+    Type: AWS::SQS::Queue
+    Properties: 
+      FifoQueue: true
 
 Outputs:
   NewsletterAPIID:
