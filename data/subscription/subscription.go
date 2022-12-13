@@ -53,8 +53,18 @@ func GetFromToken(token string) (*Subscription, error) {
 	return subs[0], nil
 }
 
+func GetAllVerifiedFromList(list string) (*[]*Subscription, error) {
+	var subs []*Subscription
+	err := table.Scan().Index("list-verified").Filter("'list' = ?", list).All(&subs)
+	if err != nil {
+		return nil, err
+	}
+	return &subs, nil
+
+}
+
 func DeleteAllForEmail(email string) error {
-	var subs []Subscription
+	var subs []*Subscription
 	err := table.Scan().Index("email").Filter("'email' = ?", email).All(&subs)
 	if err != nil {
 		return err

@@ -6,18 +6,28 @@ import (
 )
 
 type Mail struct {
-	Subscription   subscription.Subscription `json:"subscription"`
-	List           list.List                 `json:"list"`
-	Subject        string                    `json:"subject"`
-	TemplateBucket string                    `json:"template_bucket"`
-	TemplateKey    string                    `json:"template_key"`
+	To             string             `json:"to"`
+	From           string             `json:"from"`
+	ReplyTo        string             `json:"reply_to"`
+	Subject        string             `json:"subject"`
+	TemplateBucket string             `json:"template_bucket"`
+	TemplateKey    string             `json:"template_key"`
+	TemplateValues MailTemplateValues `json:"template_values"`
 }
 
-func (m *Mail) GetMailTemplateValues() MailTemplateValues {
-	return MailTemplateValues{
-		UnsubscribeLink: m.List.FormatUnsubscribeLink(m.Subscription),
-		ListName:        m.List.Name,
-		Email:           m.Subscription.Email,
+func New(s *subscription.Subscription, l *list.List, subject string, templateBucket string, templateKey string) Mail {
+	return Mail{
+		To:             s.Email,
+		From:           l.FromAddress,
+		ReplyTo:        l.ReplyToAddress,
+		TemplateBucket: templateBucket,
+		TemplateKey:    templateKey,
+		Subject:        subject,
+		TemplateValues: MailTemplateValues{
+			UnsubscribeLink: l.FormatUnsubscribeLink(*s),
+			ListName:        l.Name,
+			Email:           s.Email,
+		},
 	}
 }
 

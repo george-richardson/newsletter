@@ -44,7 +44,7 @@ func Handle(ctx context.Context, event events.SQSEvent) error {
 			return err
 		}
 
-		logger.Infof("Processing mail for '%v' with subject '%v'...", mail.Subscription.Email, mail.Subject)
+		logger.Infof("Processing mail for '%v' with subject '%v'...", mail.To, mail.Subject)
 
 		// Download template
 		logger.Debugf("Downloading template from bucket '%v' key '%v'", mail.TemplateBucket, mail.TemplateKey)
@@ -75,8 +75,8 @@ func Handle(ctx context.Context, event events.SQSEvent) error {
 		queueUrl := fmt.Sprintf("https://sqs.%v.amazonaws.com/%v/%v", queueArn.Region, queueArn.AccountID, queueArn.Resource)
 
 		// Send mail
-		logger.Debugf("Sending mail to '%v'", mail.Subscription.Email)
-		err = emailsender.SendMail(mail.Subscription.Email, mail.List.FromAddress, mail.List.ReplyToAddress, mail.Subject, t, mail.GetMailTemplateValues()) //todo use real message content here
+		logger.Debugf("Sending mail to '%v'", mail.To)
+		err = emailsender.SendMail(mail.To, mail.From, mail.ReplyTo, mail.Subject, t, mail.TemplateValues)
 		if err != nil {
 			logger.WithError(err).Error("Error sending mail")
 			return err

@@ -2,6 +2,7 @@ package list
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/guregu/dynamo"
 	"gjhr.me/newsletter/data/subscription"
@@ -27,6 +28,13 @@ type List struct {
 	Domain         string `dynamo:"domain" json:"domain"`
 	FromAddress    string `dynamo:"from_address" json:"from_address"`
 	ReplyToAddress string `dynamo:"reply_to_address" json:"reply_to_address"`
+	Feeds          []Feed `dynamo:"feeds" json:"feeds"`
+}
+
+type Feed struct {
+	Url            string    `dynamo:"url" json:"url"`
+	LastUpdated    time.Time `dynamo:"last_updated,unixtime" json:"-"`
+	ProcessedGuids []string  `dynamo:"processed_guids" json:"processed_guids"`
 }
 
 func (lst *List) FormatBaseURL() string {
@@ -63,4 +71,16 @@ func GetFromDomain(domain string) (*List, error) {
 		return nil, ERR_LIST_DOMAIN_DUPLICATED
 	}
 	return lsts[0], nil
+}
+
+func GetAll() (*[]*List, error) {
+	var lsts []*List
+	err := table.Scan().All(&lsts)
+	if err != nil {
+		return nil, err
+	}
+	if len(lsts) == 0 {
+		return nil, ERR_LIST_NOT_FOUND
+	}
+	return &lsts, nil
 }
