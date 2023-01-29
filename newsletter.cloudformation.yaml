@@ -162,6 +162,50 @@ Resources:
                   - sqs:GetQueueAttributes
                   - sqs:ChangeMessageVisibility
                 Resource: !GetAtt SenderQueue.Arn
+  FeedReaderLambdaRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - "s3:PutObject"
+                Resource: !Sub "${EmailTemplatesBucket.Arn}/*"
+              - Effect: Allow
+                Action: 
+                  - sqs:SendMessage
+                Resource: !GetAtt SenderQueue.Arn
+              - Effect: Allow # TODO check this statement scope
+                Action: 
+                  - "dynamodb:BatchGetItem"
+                  - "dynamodb:BatchWriteItem"
+                  - "dynamodb:PutItem"
+                  - "dynamodb:DescribeTable"
+                  - "dynamodb:DeleteItem"
+                  - "dynamodb:GetItem"
+                  - "dynamodb:Scan"
+                  - "dynamodb:Query"
+                  - "dynamodb:UpdateItem"
+                Resource:
+                  - !GetAtt [SubscriptionsTable, Arn]
+                  - !Sub "${SubscriptionsTable.Arn}/*"
+                  - !GetAtt [ListsTable, Arn]
+                  - !Sub "${ListsTable.Arn}/*"
 
   # Lambdas
   # Frontend
@@ -232,6 +276,25 @@ Resources:
       Enabled: true
       EventSourceArn: !GetAtt SenderQueue.Arn
       FunctionName: !GetAtt SenderLambda.Arn
+  # FeedReader
+  # TODO add scheduled trigger 
+  FeedReaderLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: go1.x
+      Role: !GetAtt [FeedReaderLambdaRole, Arn]
+      Handler: feedreader
+      Code: 
+        S3Bucket: !Ref ArtifactBucket
+        S3Key: !Ref ArtifactPath
+      Description: Newsletter frontend.
+      Environment:
+        Variables:
+          NEWSLETTER_LOG_LEVEL: debug
+          NEWSLETTER_SUBSCRIPTIONS_TABLE: !Ref SubscriptionsTable
+          NEWSLETTER_LISTS_TABLE: !Ref ListsTable
+          NEWSLETTER_TEMPLATE_BUCKET: !Ref EmailTemplatesBucket
+          NEWSLETTER_SENDER_QUEUE_URL: !GetAtt SenderQueue.QueueUrl
   # API Gateway
   NewsletterAPI:
     Type: AWS::ApiGateway::RestApi
@@ -330,7 +393,6 @@ Resources:
   # Email template objects
   EmailTemplatesBucket:
     Type: 'AWS::S3::Bucket'
-
 
   # Sender queue
   SenderQueue: 

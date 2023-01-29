@@ -10,38 +10,39 @@ CERTIFICATE_ARN="arn:aws:acm:us-east-1:000106928613:certificate/01edc0d4-95b9-47
 
 . "$UTILS_PATH"
 
-REPO_DIR=$(git rev-parse --show-toplevel) || __error-red "Failed to find root of repo."
+REPO_DIR=$(git rev-parse --show-toplevel) || _error "Failed to find root of repo."
 pushd "$REPO_DIR" > /dev/null
 
-__echo-blue "Querying artifact bucket name..."
-S3_BUCKET=$(aws cloudformation list-exports --query 'Exports[?Name==`NewsletterArtifactsBucketName`].Value' --output text) || __error-red 'Failed to get artifact bucket name. Authed with AWS?'
-__echo-green "Bucket found with name '$S3_BUCKET'"
+_info "Querying artifact bucket name..."
+S3_BUCKET=$(aws cloudformation list-exports --query 'Exports[?Name==`NewsletterArtifactsBucketName`].Value' --output text) || _error 'Failed to get artifact bucket name. Authed with AWS?'
+_ok "Bucket found with name '$S3_BUCKET'"
 
-__echo-blue "Deleting existing artifacts..."
+_info "Deleting existing artifacts..."
 rm -rf out
-__echo-green "Deleted!"
+_ok "Deleted!"
 
-__echo-blue "Building new artifacts..."
-CGO_ENABLED=0 go build -o ./out/ ./lambdas/frontend || __error-red "Failed to build frontend package."
-CGO_ENABLED=0 go build -o ./out/ ./lambdas/bouncehandler || __error-red "Failed to build bouncehandler package."
-CGO_ENABLED=0 go build -o ./out/ ./lambdas/sender || __error-red "Failed to build sender package."
-__echo-green "Built!"
+_info "Building new artifacts..."
+CGO_ENABLED=0 go build -o ./out/ ./lambdas/frontend || _error "Failed to build frontend package."
+CGO_ENABLED=0 go build -o ./out/ ./lambdas/bouncehandler || _error "Failed to build bouncehandler package."
+CGO_ENABLED=0 go build -o ./out/ ./lambdas/sender || _error "Failed to build sender package."
+CGO_ENABLED=0 go build -o ./out/ ./lambdas/feedreader || _error "Failed to build feedreader package."
+_ok "Built!"
 
-__echo-blue "Getting SHA1 of new artifact..."
+_info "Getting SHA1 of new artifact..."
 ARTIFACT_SHASUM=$(sha1sum "$ARTIFACT_PATH"/* | sha1sum | cut -d ' ' -f 1)
-__echo-green "Got SHA1 '$ARTIFACT_SHASUM'"
+_ok "Got SHA1 '$ARTIFACT_SHASUM'"
 
-__echo-blue "Zipping new artifact to '$ZIP_PATH'..."
+_info "Zipping new artifact to '$ZIP_PATH'..."
 zip -j "$ZIP_PATH" "$ARTIFACT_PATH"/*
-__echo-green "Zipped!"
+_ok "Zipped!"
 
 S3_FILE="$ARTIFACT_SHASUM.zip"
 S3_PATH="s3://$S3_BUCKET/$S3_FILE"
-__echo-blue "Uploading zip '$ZIP_PATH' to S3 path '$S3_PATH'..."
-aws s3 cp "$ZIP_PATH" "$S3_PATH" || __error-red "Failed to upload artifact."
-__echo-green "Uploaded!"
+_info "Uploading zip '$ZIP_PATH' to S3 path '$S3_PATH'..."
+aws s3 cp "$ZIP_PATH" "$S3_PATH" || _error "Failed to upload artifact."
+_ok "Uploaded!"
 
-__echo-blue "Updating stack '$STACK_NAME'..."
+_info "Updating stack '$STACK_NAME'..."
 HOSTED_ZONE_ID=$(aws route53 list-hosted-zones --query "HostedZones[?Name==\`$HOSTED_ZONE_NAME.\`"].Id --output text | cut -d '/' -f 3)
 aws cloudformation update-stack --stack-name "$STACK_NAME" \
   --template-body file://newsletter.cloudformation.yaml \
@@ -52,12 +53,12 @@ aws cloudformation update-stack --stack-name "$STACK_NAME" \
     "ParameterKey=CertificateARN,ParameterValue=$CERTIFICATE_ARN" \
     "ParameterKey=DomainName,ParameterValue=$DOMAIN_NAME" \
     "ParameterKey=HostedZoneID,ParameterValue=$HOSTED_ZONE_ID" || 
-  __error-red "Failed to update cloudformation"
+  _error "Failed to update cloudformation"
 echo "Waiting for stack update to complete..."
 aws cloudformation wait stack-update-complete --stack-name "$STACK_NAME"
-__echo-green "Stack updated!"
+_ok "Stack updated!"
 
-__echo-blue "Deploying to main stage..."
+_info "Deploying to main stage..."
 API_ID=$(aws cloudformation describe-stacks --stack-name "$STACK_NAME" --query 'Stacks[0].Outputs[?OutputKey==`NewsletterAPIID`].OutputValue' --output text)
 aws apigateway create-deployment --stage-name main --rest-api-id "$API_ID" 
-__echo-green "Stage deployed!"
+_ok "Stage deployed!"

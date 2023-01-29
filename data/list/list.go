@@ -84,3 +84,15 @@ func GetAll() (*[]*List, error) {
 	}
 	return &lsts, nil
 }
+
+func (lst *List) update() *dynamo.Update {
+	return table.Update("name", lst.Name)
+}
+
+func (lst *List) UpdateFeedLastUpdated(feedIndex int) error {
+	return lst.update().Set(fmt.Sprintf("feeds[%v].last_updated", feedIndex), time.Now().Unix()).Run()
+}
+
+func (lst *List) UpdateProcessedGuids(feedIndex int, guid string) error {
+	return lst.update().Append(fmt.Sprintf("feeds[%v].processed_guids", feedIndex), []string{guid}).Run()
+}

@@ -17,7 +17,9 @@ func init() {
 }
 
 func SendMail(email string, sender string, replyTo string, subject string, template *template.Template, data interface{}) error {
-	//todo add List-Unsubscribe header using raw email
+	//todo add List-Unsubscribe header using raw email (enmime package?)
+	//todo Get email sender name to match newsletter title
+	//todo integration test with inbucket
 	log.Infof("Sending email with subject '%v' to '%v'...", subject, email)
 	// Format the body
 	sb := &strings.Builder{}

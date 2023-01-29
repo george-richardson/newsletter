@@ -47,7 +47,7 @@ func Handle(ctx context.Context, event events.CloudWatchEvent) error {
 	now := time.Now()
 
 	for _, l := range *lists {
-		for _, feed := range l.Feeds {
+		for fi, feed := range l.Feeds {
 			logger := log.WithFields(log.Fields{
 				"list": l.Name,
 				"feed": feed.Url,
@@ -68,9 +68,16 @@ func Handle(ctx context.Context, event events.CloudWatchEvent) error {
 
 			for _, item := range parsed.Items {
 				// Only process new items published in the last day or later
-				if !slices.Contains(feed.ProcessedGuids, item.GUID) && item.PublishedParsed != nil && item.PublishedParsed.After(now.Add(-24*time.Hour)) {
+				alreadyProcessed := slices.Contains(feed.ProcessedGuids, item.GUID)
+				recentlyPublished := item.PublishedParsed != nil && item.PublishedParsed.After(now.Add(-24*time.Hour))
+				if !alreadyProcessed && recentlyPublished {
 					// Mark guid as processed first to avoid bugs causing multiple sends.
-					// todo mark guid as processed
+					err = l.UpdateProcessedGuids(fi, item.GUID)
+					// If GUID cannot be marked as processed, error out immediately.
+					if err != nil {
+						logger.WithField("guid", item.GUID).WithError(err).Error("Failed to add guid to processed list for feed")
+						return err
+					}
 
 					// Queue up a message here
 					err := QueueMails(item, l, logger)
@@ -81,7 +88,12 @@ func Handle(ctx context.Context, event events.CloudWatchEvent) error {
 				}
 			}
 
-			// todo Update last updated
+			// Update last updated
+			err = l.UpdateFeedLastUpdated(fi)
+			if err != nil {
+				hasErrored = true
+				continue
+			}
 		}
 	}
 
