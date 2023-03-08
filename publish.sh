@@ -3,10 +3,19 @@ set -e
 
 ARTIFACT_PATH="out/"
 ZIP_PATH="out/newsletter.zip"
-STACK_NAME="newsletter-dev"
 HOSTED_ZONE_NAME="gjhr.me"
-DOMAIN_NAME="newsletter-dev.gjhr.me"
-CERTIFICATE_ARN="arn:aws:acm:us-east-1:000106928613:certificate/01edc0d4-95b9-476f-8e76-cda2bf3da633"
+
+if [[ "$1" == "prod" ]]; then
+  echo "Are you sure you want deploy to prod? [Enter to continue]"
+  read
+  STACK_NAME="newsletter-prod"
+  DOMAIN_NAME="newsletter.gjhr.me"
+  CERTIFICATE_ARN="arn:aws:acm:us-east-1:000106928613:certificate/0d203eaa-5b1a-4af8-8fe2-c7c1022b1b9e"
+else
+  STACK_NAME="newsletter-dev"
+  DOMAIN_NAME="newsletter-dev.gjhr.me"
+  CERTIFICATE_ARN="arn:aws:acm:us-east-1:000106928613:certificate/01edc0d4-95b9-476f-8e76-cda2bf3da633"
+fi 
 
 . "$UTILS_PATH"
 
