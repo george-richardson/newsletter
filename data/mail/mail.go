@@ -32,7 +32,7 @@ func New(s *subscription.Subscription, l *list.List, subject string, templateBuc
 }
 
 type MailTemplateValues struct {
-	UnsubscribeLink string
-	ListName        string
-	Email           string
+	UnsubscribeLink string `json:"unsubscribe_link"`
+	ListName        string `json:"list_name"`
+	Email           string `json:"email"`
 }
