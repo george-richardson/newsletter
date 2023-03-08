@@ -277,7 +277,6 @@ Resources:
       EventSourceArn: !GetAtt SenderQueue.Arn
       FunctionName: !GetAtt SenderLambda.Arn
   # FeedReader
-  # TODO add scheduled trigger 
   FeedReaderLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -295,6 +294,22 @@ Resources:
           NEWSLETTER_LISTS_TABLE: !Ref ListsTable
           NEWSLETTER_TEMPLATE_BUCKET: !Ref EmailTemplatesBucket
           NEWSLETTER_SENDER_QUEUE_URL: !GetAtt SenderQueue.QueueUrl
+  FeedReaderScheduledRule: 
+    Type: AWS::Events::Rule
+    Properties: 
+      Description: "Feed reader schedule"
+      ScheduleExpression: "rate(5 minutes)"
+      State: "ENABLED"
+      Targets: 
+        - Arn: !GetAtt FeedReaderLambda.Arn
+          Id: "TargetFunctionV1"
+  PermissionForEventsToInvokeLambda: 
+    Type: AWS::Lambda::Permission
+    Properties: 
+      FunctionName: !Ref "FeedReaderLambda"
+      Action: "lambda:InvokeFunction"
+      Principal: "events.amazonaws.com"
+      SourceArn: !GetAtt FeedReaderScheduledRule.Arn
   # API Gateway
   NewsletterAPI:
     Type: AWS::ApiGateway::RestApi
